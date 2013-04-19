@@ -364,6 +364,7 @@ class context_reaction_block extends context_reaction {
    * An alternative version of block_list() that provides any context enabled blocks.
    */
   function block_list($region) {
+    GLOBAL $language;
     module_load_include('module', 'block', 'block');
 
     $context_blocks = &drupal_static('context_reaction_block_list');;
@@ -378,15 +379,18 @@ class context_reaction_block extends context_reaction {
             $bid = "{$context_block['module']}-{$context_block['delta']}";
             if (isset($info[$bid])) {
               $block = (object) array_merge((array) $info[$bid], $context_block);
-              $block->context = $context->name;
-              $block->title = isset($info[$block->bid]->title) ? $info[$block->bid]->title : NULL;
-              $block->cache = isset($info[$block->bid]->cache) ? $info[$block->bid]->cache : DRUPAL_NO_CACHE;
-              $context_blocks[$block->region][$block->bid] = $block;
+              // Only display block if no languages are configured or if block has to displayed on current language
+              if(!isset($block->language) || (isset($block->language) && isset($block->language[$language->language]))) {
+                $block->context = $context->name;
+                $block->title = isset($info[$block->bid]->title) ? $info[$block->bid]->title : NULL;
+                $block->cache = isset($info[$block->bid]->cache) ? $info[$block->bid]->cache : DRUPAL_NO_CACHE;
+                $context_blocks[$block->region][$block->bid] = $block;
+              }
             }
           }
         }
       }
-      
+
       $this->is_editable_check($context_blocks);
       foreach ($context_blocks as $r => $blocks) {
         $context_blocks[$r] = _block_render_blocks($blocks);
